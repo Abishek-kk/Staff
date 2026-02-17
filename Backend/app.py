@@ -110,7 +110,7 @@ def process_pdf(uploaded_file, gender):
             })
 
     divisor_seconds = current_std_weekday.total_seconds()
-    # Updated Logic: 20-minute tolerance (1200 seconds) for earned leave calculation
+    # 20-minute tolerance (1200 seconds) for earned leave calculation
     earned_days = int((total_extra_sec + 1200) // divisor_seconds)
     
     df = pd.DataFrame(processed_data).drop_duplicates(subset=['Date'])
@@ -161,7 +161,6 @@ if choice == "📊 Calculator":
 # --- HISTORY VIEW ---
 else:
     st.header("📂 Saved Database Records")
-    # Wrap in try/except to catch any remaining connection issues immediately
     try:
         data = list(collection.find())
     except Exception as e:
@@ -178,10 +177,10 @@ else:
                 pdf.cell(0, 10, "CoE - Monthly Biometric Summary", align='C', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
                 pdf.ln(5)
                 
-                pdf.set_font("Helvetica", 'B', 10)
-                # Layout based on the user's reference image
-                w = [80, 40, 40, 30] 
-                cols = ["CoE Faculty Name", "Extra working hours", "Work Nature", "Remarks"]
+                pdf.set_font("Helvetica", 'B', 9)
+                # Expanded Table Structure: 5 Columns
+                w = [65, 35, 35, 25, 25] 
+                cols = ["CoE Faculty Name", "Extra Hours", "Work Nature", "Earned", "Absents"]
                 
                 for i, col in enumerate(cols):
                     nxt_x = XPos.LMARGIN if i == len(cols)-1 else XPos.RIGHT
@@ -195,11 +194,17 @@ else:
                     pdf.cell(w[1], 10, str(item.get('extra_time', '00:00')), border=1, align='C', new_x=XPos.RIGHT, new_y=YPos.TOP)
                     pdf.cell(w[2], 10, "CoE Work", border=1, align='C', new_x=XPos.RIGHT, new_y=YPos.TOP)
                     
+                    # Column 4: Earned Days
                     e_days = item.get('earned_days', 0)
-                    remarks = str(e_days) if str(e_days) != '0' else "-"
-                    pdf.cell(w[3], 10, remarks, border=1, align='C', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+                    e_display = str(e_days) if e_days != 0 else "-"
+                    pdf.cell(w[3], 10, e_display, border=1, align='C', new_x=XPos.RIGHT, new_y=YPos.TOP)
+
+                    # Column 5: Absents
+                    abs_count = item.get('absents', 0)
+                    abs_display = str(abs_count) if abs_count != 0 else "-"
+                    pdf.cell(w[4], 10, abs_display, border=1, align='C', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
                 
-                st.download_button("📥 Click to Download PDF", data=bytes(pdf.output()), file_name="CoE_Report.pdf", mime="application/pdf")
+                st.download_button("📥 Click to Download PDF", data=bytes(pdf.output()), file_name="CoE_Detailed_Report.pdf", mime="application/pdf")
         
         with c2:
              if st.button("🔥 Wipe All Data", use_container_width=True):
